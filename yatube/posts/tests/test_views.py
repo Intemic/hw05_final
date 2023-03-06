@@ -94,6 +94,7 @@ class TestView(TestCase):
         self.assertEqual(group.description, group_ref.description)
 
     def setUp(self):
+        cache.clear()
         self.author_client = Client()
         self.author_client.force_login(self.user_pshk)
 
