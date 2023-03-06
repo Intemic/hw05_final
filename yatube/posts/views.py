@@ -7,6 +7,7 @@ from .forms import CommentForm, PostForm
 from .models import Comment, Follow, Group, Post, User
 from .utils import get_page_obj
 
+
 @cache_page(20)
 def index(request: HttpRequest) -> HttpResponse:
     post_list = Post.objects.select_related('author', 'group').all()
