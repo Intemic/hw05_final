@@ -267,7 +267,7 @@ class TestView(TestCase):
 
         page_count_post = (
             (1, settings.NUMBER_OF_LINES_ON_PAGE),
-            (2, number_obj_on_secon_page)        
+            (2, number_obj_on_secon_page)
         )
 
         Post.objects.bulk_create(
@@ -286,7 +286,7 @@ class TestView(TestCase):
                     response = self.author_client.get(
                         url, [('page', page_n)]
                     )
-                    self.assertEqual(        
+                    self.assertEqual(
                         len(response.context['page_obj']),
                         count_post_in_page
                     )
@@ -325,7 +325,7 @@ class TestView(TestCase):
             'posts:profile',
             kwargs={'username': user_leo.username}
         )
-        
+
         # проверим что пост не попал на другую страницу
         response = self.author_client.get(url)
         page = response.context.get('page_obj')
@@ -344,7 +344,7 @@ class TestView(TestCase):
 
         url = reverse(
             'posts:post_detail',
-            kwargs={'post_id': self.post.pk}        
+            kwargs={'post_id': self.post.pk}
         )
 
         response = self.author_client.get(url)
