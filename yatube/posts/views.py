@@ -29,9 +29,14 @@ def group_posts(request: HttpRequest, slug: str) -> HttpResponse:
 
 def profile(request: HttpRequest, username: str) -> HttpResponse:
     user = get_object_or_404(User, username=username)
+    
     post_list = Post.objects.filter(
         author=user).prefetch_related('author', 'group').all()
-    following = user.following.filter(user=request.user).exists()
+    
+    if not request.user.is_anonymous:
+        following = user.following.filter(user=request.user).exists()
+    else:
+        following = False
 
     context = {
         'author': user,
