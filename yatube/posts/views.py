@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import get_object_or_404, get_list_or_404, redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import cache_page
 
 from .forms import CommentForm, PostForm
@@ -119,7 +119,7 @@ def add_comment(request: HttpRequest, post_id: int):
 def follow_index(request: HttpRequest):
     author_list = [follow.author for follow in Follow.objects.filter(
         user=request.user)
-    ]    
+    ]
     post_list = Post.objects.filter(author__in=author_list)
     context = {
         'page_obj': get_page_obj(request, post_list),
