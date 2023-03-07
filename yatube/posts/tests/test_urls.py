@@ -1,6 +1,5 @@
 from http import HTTPStatus
 
-from django.core.cache import cache
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -25,7 +24,6 @@ class TestUrl(TestCase):
         )
 
     def setUp(self) -> None:
-        cache.clear()
         self.guest_client = Client()
         self.auth_client = Client()
         self.auth_client.force_login(TestUrl.user)
