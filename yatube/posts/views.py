@@ -31,12 +31,8 @@ def profile(request: HttpRequest, username: str) -> HttpResponse:
     user = get_object_or_404(User, username=username)
     post_list = Post.objects.filter(
         author=user).prefetch_related('author', 'group').all()
-
-    print(user.follower, user.following)
-
     if not request.user.is_anonymous:
-        following = Follow.objects.filter(
-            user=request.user).filter(author=user).exists()
+        following = user.following.filter(user=request.user).exists()
     else:
         following = False
 
@@ -117,10 +113,10 @@ def add_comment(request: HttpRequest, post_id: int):
 
 @login_required
 def follow_index(request: HttpRequest):
-    author_list = [follow.author for follow in Follow.objects.filter(
-        user=request.user)
-    ]
-    post_list = Post.objects.filter(author__in=author_list)
+    author_list = [follow.author for follow in request.user.follower.all()]
+
+    post_list = Post.objects.select_related(
+        'author', 'group').filter(author__in=author_list)
     context = {
         'page_obj': get_page_obj(request, post_list),
     }
@@ -133,7 +129,6 @@ def profile_follow(request: HttpRequest, username: str):
     author = get_object_or_404(User, username=username)
     is_signed = request.user.follower.filter(author=author).exists()
     if username != request.user.username and not is_signed:
-        author = get_object_or_404(User, username=username)
         Follow.objects.create(user=request.user, author=author)
     return redirect('posts:profile', username=username)
 
