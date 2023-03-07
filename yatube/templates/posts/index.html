@@ -2,9 +2,7 @@
 {% load cache %}
 {% block content %}
   <h1>Последние обновления на сайте</h1>
-  {% if user.is_authenticated %}
-    {% include 'posts/includes/switcher.html' %}
-  {% endif %}
+  {% include 'posts/includes/switcher.html' %}
   {% cache 20 index_page %}
     {% for post in page_obj %}
       {% include "includes/article.html"%}

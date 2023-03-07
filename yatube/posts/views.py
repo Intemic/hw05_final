@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, get_list_or_404, redirect, render
 from django.views.decorators.cache import cache_page
 
 from .forms import CommentForm, PostForm
@@ -29,12 +29,14 @@ def group_posts(request: HttpRequest, slug: str) -> HttpResponse:
 
 def profile(request: HttpRequest, username: str) -> HttpResponse:
     user = get_object_or_404(User, username=username)
-
     post_list = Post.objects.filter(
         author=user).prefetch_related('author', 'group').all()
 
+    print(user.follower, user.following)
+
     if not request.user.is_anonymous:
-        following = user.following.filter(user=request.user).exists()
+        following = Follow.objects.filter(
+            user=request.user).filter(author=user).exists()
     else:
         following = False
 
@@ -115,10 +117,10 @@ def add_comment(request: HttpRequest, post_id: int):
 
 @login_required
 def follow_index(request: HttpRequest):
-    author_list = [follow.author for follow in request.user.follower.all()]
-
-    post_list = Post.objects.select_related(
-        'author', 'group').filter(author__in=author_list)
+    author_list = [follow.author for follow in Follow.objects.filter(
+        user=request.user)
+    ]    
+    post_list = Post.objects.filter(author__in=author_list)
     context = {
         'page_obj': get_page_obj(request, post_list),
     }
@@ -129,9 +131,8 @@ def follow_index(request: HttpRequest):
 def profile_follow(request: HttpRequest, username: str):
     # Подписаться на автора
     author = get_object_or_404(User, username=username)
-    if username != request.user.username and (
-        not request.user.follower.filter(author=author).exists()
-    ):
+    is_signed = request.user.follower.filter(author=author).exists()
+    if username != request.user.username and not is_signed:
         author = get_object_or_404(User, username=username)
         Follow.objects.create(user=request.user, author=author)
     return redirect('posts:profile', username=username)
