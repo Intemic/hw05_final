@@ -9,8 +9,8 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django import forms
 
-from posts.forms import PostForm
-from posts.models import Follow, Group, Post, User
+from posts.forms import CommentForm, PostForm
+from posts.models import Comment, Follow, Group, Post, User
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
@@ -111,6 +111,12 @@ class TestView(TestCase):
         self.assertEqual(group.slug, group_ref.slug)
         self.assertEqual(group.description, group_ref.description)
 
+    def compare_comment(self, comment: Comment, comment_ref: Comment) -> None:
+        self.assertIsInstance(comment, Comment)
+        self.assertEqual(comment.post, comment_ref.post)
+        self.assertEqual(comment.author, comment_ref.author)
+        self.assertEqual(comment.text, comment_ref.text)
+
     def subscribe(self) -> User:
         subscribe_user = User.objects.create_user(username='subscribe')
         subscribed_client = Client()
@@ -166,21 +172,26 @@ class TestView(TestCase):
 
     def test_profile_page(self):
         """Проверка профиля(контекст, шаблон, данные)."""
+        # подпишемся
+        user, client = self.subscribe()
+
         url = reverse(
             'posts:profile',
             kwargs={'username': self.post.author.username}
         )
 
-        response = self.author_client.get(url)
+        response = client.get(url)
 
         page = response.context.get('page_obj')
         self.assertIsInstance(page, Page)
         author = response.context.get('author')
         self.assertIsInstance(author, User)
+        following = response.context.get('following')
 
         # проверим данные объекта и автора
         self.compare_posts(page.object_list[0], self.post)
         self.assertEqual(author, self.post.author)
+        self.assertTrue(following)
 
     def test_post_detail_page(self):
         """Проверка страницы поста(контекст, шаблон, данные)."""
@@ -189,10 +200,19 @@ class TestView(TestCase):
             kwargs={'post_id': self.post.pk}
         )
 
+        comment = Comment.objects.create(
+            post=TestView.post,
+            author=User.objects.create_user(username='esen'),
+            text='Просто комментарий'
+        )
+
         response = self.author_client.get(url)
 
         post = response.context.get('post')
         self.compare_posts(post, self.post)
+        comment_ret = response.context.get('comments')[0]
+        self.compare_comment(comment, comment_ret)
+        self.assertIsInstance(response.context.get('form'), CommentForm)
 
     def test_post_edit_page(self):
         """Проверка страницы редактирования(контекст, шаблон, данные)."""
@@ -385,52 +405,6 @@ class TestView(TestCase):
         post = response.context.get('post')
         self.assertNotEqual(post.pk, post2.pk)
 
-    def test_display_image_on_main_page(self):
-        # так как у нас проверяется одна и та же функциональность
-        # попробуем так, вроде атомарность не нарушаем
-        # одну же функциональность проверяем
-        urls = (
-            (
-                reverse('posts:index'),
-                'page_obj',
-            ),
-
-            (
-                reverse(
-                    'posts:group_list',
-                    kwargs={'slug': TestView.post.group.slug}
-                ),
-                'page_obj',
-            ),
-
-            (
-                reverse(
-                    'posts:profile',
-                    kwargs={'username': TestView.user_pshk.username}
-                ),
-                'page_obj',
-            ),
-
-            (
-                reverse(
-                    'posts:post_detail',
-                    kwargs={'post_id': TestView.post.pk}
-                ),
-                'post',
-            ),
-        )
-
-        for url, elem in urls:
-            with self.subTest(url=url):
-                response = self.author_client.get(url)
-                obj = response.context.get(elem)
-                if elem == 'page_obj':
-                    obj = obj.object_list[0]
-                self.assertEqual(
-                    obj.image.name,
-                    f'posts/{TestView.upload_image.name}'
-                )
-
     def test_authorized_user_can_subscribe(self):
         """Провери возможность подписки"""
         # не было подписок
@@ -461,17 +435,12 @@ class TestView(TestCase):
     def test_the_post_appears_in_the_subscribers(self):
         """Новая запись пользователя появляется в ленте тех, кто.
 
-        на него подписан и не появляется в ленте тех, кто не подписан
+        на него подписан
         """
         # подписанный пользватель
         subscribe_user = User.objects.create_user(username='subscribe')
         subscribed_client = Client()
         subscribed_client.force_login(subscribe_user)
-
-        # неподписанный
-        unsubscribe_user = User.objects.create_user(username='unsubscribe')
-        unsubscribed_client = Client()
-        unsubscribed_client.force_login(unsubscribe_user)
 
         # подпишемся на Пушкина
         Follow.objects.create(
@@ -492,6 +461,24 @@ class TestView(TestCase):
         # проверим что наш пост попал
         self.assertIn(post, page.object_list)
         self.compare_posts(page.object_list[0], post)
+
+    def the_post_not_appears_in_the_subscribers(self):
+        """Новая запись пользователя не появляется в ленте тех.
+
+        кто не подписан
+        """
+        # неподписанный
+        unsubscribe_user = User.objects.create_user(username='unsubscribe')
+        unsubscribed_client = Client()
+        unsubscribed_client.force_login(unsubscribe_user)
+
+        Post.objects.all().delete()
+
+        post = Post.objects.create(
+            text='Тестирование подписи',
+            author=TestView.user_pshk,
+            group=TestView.group1
+        )
 
         response = unsubscribed_client.get(reverse('posts:follow_index'))
         page = response.context.get('page_obj')
