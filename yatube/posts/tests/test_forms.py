@@ -104,6 +104,7 @@ class TestForm(TestCase):
 
         проверим что комментарий сохраняется и появляется на странице поста
         """
+        count = Comment.objects.count()
         form_data = {
             'text': 'Это пробный комментарий'
         }
@@ -123,3 +124,4 @@ class TestForm(TestCase):
         comment = response.context.get('comments')[0]
         self.assertIsInstance(comment, Comment)
         self.assertEqual(comment.text, form_data['text'])
+        self.assertEqual(Comment.objects.count(), count + 1)
