@@ -135,4 +135,4 @@ class TestUrl(TestCase):
         """Тестируем наш шаблон 404."""
         url = '/posts/999/'
         response = self.guest_client.post(url)
-        self.assertTemplateUsed(response, 'core/404 page_not_found.html')
+        self.assertTemplateUsed(response, 'core/404_page_not_found.html')
