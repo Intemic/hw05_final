@@ -26,10 +26,27 @@ class TestView(TestCase):
             slug='group1',
             description='Group1'
         )
+
+        small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x02\x00'
+            b'\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+            b'\x0A\x00\x3B'
+        )
+
+        cls.upload_image = SimpleUploadedFile(
+            name='small.gif',
+            content=small_gif,
+            content_type='image/gif'
+        )
+
         cls.post = Post.objects.create(
             text='Пост 1',
             author=cls.user_pshk,
-            group=cls.group1
+            group=cls.group1,
+            image=cls.upload_image
         )
 
         cls.urls_pattern = (
@@ -86,12 +103,28 @@ class TestView(TestCase):
         self.assertEqual(post.text, post_ref.text)
         self.assertEqual(post.group, post_ref.group)
         self.assertEqual(post.author, post_ref.author)
+        self.assertEqual(post.image, post_ref.image)
 
     def compare_groups(self, group: Group, group_ref: Group) -> None:
         self.assertIsInstance(group, Group)
         self.assertEqual(group.title, group_ref.title)
         self.assertEqual(group.slug, group_ref.slug)
         self.assertEqual(group.description, group_ref.description)
+
+    def subscribe(self) -> User:
+        subscribe_user = User.objects.create_user(username='subscribe')
+        subscribed_client = Client()
+        subscribed_client.force_login(subscribe_user)
+
+        # подписываемся
+        subscribed_client.post(
+            reverse(
+                'posts:profile_follow',
+                kwargs={'username': TestView.user_pshk.username}
+            )
+        )
+
+        return (subscribe_user, subscribed_client)
 
     def setUp(self):
         cache.clear()
@@ -356,28 +389,6 @@ class TestView(TestCase):
         # так как у нас проверяется одна и та же функциональность
         # попробуем так, вроде атомарность не нарушаем
         # одну же функциональность проверяем
-        small_gif = (
-            b'\x47\x49\x46\x38\x39\x61\x02\x00'
-            b'\x01\x00\x80\x00\x00\x00\x00\x00'
-            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-            b'\x0A\x00\x3B'
-        )
-
-        upload_image = SimpleUploadedFile(
-            name='small.gif',
-            content=small_gif,
-            content_type='image/gif'
-        )
-
-        post = Post.objects.create(
-            text='Пост 1',
-            author=TestView.user_pshk,
-            group=TestView.group1,
-            image=upload_image
-        )
-
         urls = (
             (
                 reverse('posts:index'),
@@ -387,7 +398,7 @@ class TestView(TestCase):
             (
                 reverse(
                     'posts:group_list',
-                    kwargs={'slug': post.group.slug}
+                    kwargs={'slug': TestView.post.group.slug}
                 ),
                 'page_obj',
             ),
@@ -403,7 +414,7 @@ class TestView(TestCase):
             (
                 reverse(
                     'posts:post_detail',
-                    kwargs={'post_id': post.pk}
+                    kwargs={'post_id': TestView.post.pk}
                 ),
                 'post',
             ),
@@ -415,36 +426,37 @@ class TestView(TestCase):
                 obj = response.context.get(elem)
                 if elem == 'page_obj':
                     obj = obj.object_list[0]
-                self.assertEqual(obj.image.name, f'posts/{upload_image.name}')
+                self.assertEqual(
+                    obj.image.name,
+                    f'posts/{TestView.upload_image.name}'
+                )
 
-    def test_authorized_user_can_subscribe_and_unsubscribe(self):
-        """Провери возможность подписки/отписки"""
-        count = Follow.objects.count()
+    def test_authorized_user_can_subscribe(self):
+        """Провери возможность подписки"""
+        # не было подписок
+        self.assertEqual(Follow.objects.count(), 0)
+        user, client = self.subscribe()
+        self.assertTrue(TestView.user_pshk.following.filter(
+            user=user).exists())
 
-        subscribe_user = User.objects.create_user(username='subscribe')
-        subscribed_client = Client()
-        subscribed_client.force_login(subscribe_user)
-
+    def test_authorized_user_can_unsubscribe(self):
+        """Провери возможность отписки"""
         # подписываемся
-        subscribed_client.post(
-            reverse(
-                'posts:profile_follow',
-                kwargs={'username': TestView.user_pshk.username}
-            )
-        )
-        self.assertEqual(Follow.objects.count(), count + 1)
-        follow: Follow = Follow.objects.all()[0]
-        self.assertEqual(follow.user, subscribe_user)
-        self.assertEqual(follow.author, TestView.user_pshk)
+        user, client = self.subscribe()
+
+        signed = TestView.user_pshk.following.filter(
+            user=user).exists()
+        self.assertTrue(signed)
 
         # отписываемся
-        subscribed_client.post(
+        client.post(
             reverse(
                 'posts:profile_unfollow',
                 kwargs={'username': TestView.user_pshk.username}
             )
         )
-        self.assertEqual(Follow.objects.count(), count)
+        self.assertEqual(TestView.user_pshk.following.filter(
+            user=user).exists(), False)
 
     def test_the_post_appears_in_the_subscribers(self):
         """Новая запись пользователя появляется в ленте тех, кто.
