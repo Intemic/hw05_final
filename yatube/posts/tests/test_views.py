@@ -500,4 +500,4 @@ class TestView(TestCase):
         self.assertEqual(response_before.content, response_after.content)
         cache.clear()
         response_last = self.author_client.get(reverse('posts:index'))
-        self.assertNotEqual(response_after.content, response_last)
+        self.assertNotEqual(response_after.content, response_last.content)

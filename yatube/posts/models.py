@@ -78,6 +78,9 @@ class Comment(models.Model):
         help_text='Дата комментария'
     )
 
+    class Meta:
+        ordering = ['-created']
+
 
 class Follow(models.Model):
     user = models.ForeignKey(
