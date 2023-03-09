@@ -20,17 +20,17 @@ class TestModel(TestCase):
 
     def test_text_length_post(self):
         len_text = len(str(TestModel.post))
-        self.assertEquals(len_text, 15, 'Некорректная длина текста')
+        self.assertEqual(len_text, 15, 'Некорректная длина текста')
 
     def test_text_value_post(self):
-        self.assertEquals(
+        self.assertEqual(
             str(TestModel.post),
             TestModel.post.text[:15],
             'Некорректное значение текста __str__'
         )
 
     def test_text_value_group(self):
-        self.assertEquals(
+        self.assertEqual(
             str(TestModel.group),
             TestModel.group.title,
             'Некорректное значение текста __str__'
