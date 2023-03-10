@@ -123,7 +123,7 @@ def follow_index(request: HttpRequest):
 def profile_follow(request: HttpRequest, username: str):
     # Подписаться на автора
     author = get_object_or_404(User, username=username)
-    # не проходит тесты на сайте
+    # здесь лоханулся, все нормально с тестами
     if username != request.user.username:
         Follow.objects.get_or_create(user=request.user, author=author)
     return redirect('posts:profile', username=username)

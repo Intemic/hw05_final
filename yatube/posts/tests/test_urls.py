@@ -137,12 +137,16 @@ class TestUrl(TestCase):
         response = self.guest_client.post(url)
         self.assertTemplateUsed(response, 'core/404_page_not_found.html')
 
-    def test_follow_page(self):
-        """Тестируем подписку."""
+    def test_redirect_follow_page(self):
+        """Тестируем redurect, неавторизованный пользователь."""
         url = '/follow/'
         # гость
         response = self.guest_client.get(url)
         self.assertRedirects(response, '/auth/login/?next=' + url)
+
+    def test_follow_page(self):
+        """Тестируем подписку, авторизованный пользователь."""
+        url = '/follow/'
         # авторизованный
         response = self.auth_client.get(url)
         self.assertEqual(response.status_code, HTTPStatus.OK)
