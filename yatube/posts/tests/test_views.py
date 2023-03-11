@@ -416,21 +416,21 @@ class TestView(TestCase):
     def test_authorized_user_can_unsubscribe(self):
         """Провери возможность отписки"""
         # подписываемся
-        user, client = self.subscribe()
+        subscribe_user = User.objects.create_user(username='subscribe')
+        subscribed_client = Client()
+        subscribed_client.force_login(subscribe_user)
 
-        signed = TestView.user_pshk.following.filter(
-            user=user).exists()
-        self.assertTrue(signed)
+        Follow.objects.create(user=subscribe_user, author=TestView.user_pshk)
 
         # отписываемся
-        client.post(
+        subscribed_client.post(
             reverse(
                 'posts:profile_unfollow',
                 kwargs={'username': TestView.user_pshk.username}
             )
         )
         self.assertEqual(TestView.user_pshk.following.filter(
-            user=user).exists(), False)
+            user=subscribe_user).exists(), False)
 
     def test_the_post_appears_in_the_subscribers(self):
         """Новая запись пользователя появляется в ленте тех, кто.
