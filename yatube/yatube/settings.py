@@ -8,6 +8,8 @@ SECRET_KEY = 'iw5ad6!#am3+j7=!f(7@b5s^tnzoi38p2s)ul9cwm5t9q0a+5o'
 DEBUG = True
 
 ALLOWED_HOSTS = [
+    'intemic.pythonanywhere.com',
+    'www.intemic.pythonanywhere.com',
     'localhost',
     '127.0.0.1',
     '[::1]',
@@ -28,6 +30,7 @@ INSTALLED_APPS = [
     'core.apps.CoreConfig',
     'about.apps.AboutConfig',
     'sorl.thumbnail',
+    'debug_toolbar',
 ]
 
 MIDDLEWARE = [
@@ -38,6 +41,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'yatube.urls'
@@ -120,3 +124,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 CSRF_FAILURE_VIEW = 'core.views.csrf_failure'
+
+INTERNAL_IPS = [
+    '127.0.0.1',
+]
