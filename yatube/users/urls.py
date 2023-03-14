@@ -53,4 +53,9 @@ urlpatterns = [
         ),
         name='password_change_done'
     ),
+    path(
+        'edit_user/',
+        views.Edit.as_view(),
+        name='edit_user'
+    )
 ]
