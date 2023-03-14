@@ -57,5 +57,5 @@ urlpatterns = [
         'edit_user/',
         views.Edit.as_view(),
         name='edit_user'
-    )
+    ),
 ]

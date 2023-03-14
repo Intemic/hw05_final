@@ -17,4 +17,5 @@ class EditForm(UserChangeForm):
 
     class Meta(UserChangeForm.Meta):
         model = User
-        fields = ('username', 'first_name', 'last_name', 'email', 'password') 
+        fields = ('first_name', 'last_name', 'email', 'password') 
+
