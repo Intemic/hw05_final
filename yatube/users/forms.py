@@ -15,7 +15,13 @@ class EditForm(UserChangeForm):
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'please enter password'}))
 
+    def clean_username(self):
+        username = self.cleaned_data['username']
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError(f'Пользователь {username} уже существует')
+        return username
+ 
     class Meta(UserChangeForm.Meta):
         model = User
-        fields = ('first_name', 'last_name', 'email', 'password') 
+        fields = ('username', 'first_name', 'last_name', 'email') 
 

@@ -6,13 +6,13 @@ from django.contrib.auth.views import PasswordResetDoneView
 from django.contrib.auth.views import PasswordResetView
 from django.urls import path, reverse_lazy
 
-from . import views
+from .views import Edit, SignUp
 
 app_name = 'users'
 
 
 urlpatterns = [
-    path('signup/', views.SignUp.as_view(), name='signup'),
+    path('signup/', SignUp.as_view(), name='signup'),
     path(
         'logout/',
         LogoutView.as_view(template_name='users/logged_out.html'),
@@ -53,9 +53,5 @@ urlpatterns = [
         ),
         name='password_change_done'
     ),
-    path(
-        'edit_user/',
-        views.Edit.as_view(),
-        name='edit_user'
-    ),
+    path('edit_user/', Edit.as_view(), name='edit_user')
 ]
