@@ -1,5 +1,5 @@
-from django.urls import reverse_lazy
 from django.views.generic import CreateView, UpdateView
+from django.urls import reverse_lazy
 
 from .forms import EditForm, CreationForm
 
