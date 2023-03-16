@@ -16,6 +16,11 @@
   {% endthumbnail %}
   <p>{{ post.text|linebreaksbr }}</p>
   <a href="{% url 'posts:post_detail' post.pk %}">подробная информация </a><br>
+  {% if post.author == user %}
+    <a href="{% url 'posts:delete_post' post.pk %}">
+      Удалить пост
+    </a>  
+  {% endif %}
 </article>  
 {% if author and post.group %}   
   <a href="{% url 'posts:group_list' post.group.slug %}">все записи группы</a>

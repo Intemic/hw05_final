@@ -1,14 +1,12 @@
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.cache import cache_page
 
 from .forms import CommentForm, PostForm
 from .models import Comment, Follow, Group, Post, User
 from .utils import get_page_obj
 
 
-@cache_page(20)
 def index(request: HttpRequest) -> HttpResponse:
     post_list = Post.objects.select_related('author', 'group').all()
     context = {
@@ -134,3 +132,10 @@ def profile_unfollow(request: HttpRequest, username: str):
     author = get_object_or_404(User, username=username)
     Follow.objects.filter(user=request.user).filter(author=author).delete()
     return redirect('posts:profile', username=username)
+
+
+@login_required
+def delete_post(request: HttpRequest, post_id: int):
+    post = get_object_or_404(Post, pk=post_id)
+    post.delete()
+    return redirect('posts:index')
