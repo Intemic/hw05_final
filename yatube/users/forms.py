@@ -20,6 +20,14 @@ class EditForm(UserChangeForm):
         )
     )
 
+    password2 = forms.CharField(
+        widget=forms.PasswordInput(
+            attrs={
+                'class': 'form-control', 'placeholder': 'please enter password'
+            }
+        )
+    )
+
     def clean_username(self):
         username = self.cleaned_data['username']
         if User.objects.filter(username=username).exists():
@@ -30,4 +38,4 @@ class EditForm(UserChangeForm):
 
     class Meta(UserChangeForm.Meta):
         model = User
-        fields = ('username', 'first_name', 'last_name', 'email') 
+        fields = ('first_name', 'last_name', 'email',)

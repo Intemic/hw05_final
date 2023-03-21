@@ -34,6 +34,11 @@
               href="{% url 'auth:password_change' %}">Изменить пароль</a>
           </li>
           <li class="nav-item"> 
+            <a class="nav-link link-light 
+              {% if view_name == 'auth:edit_user' %}active{% endif %}"
+              href="{% url 'auth:edit_user' %}">Профиль пользователя</a>
+          </li>
+          <li class="nav-item"> 
             <a class="nav-link link-light"
               href="{% url 'auth:logout' %}">Выйти
             </a>

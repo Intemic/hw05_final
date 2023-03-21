@@ -500,3 +500,17 @@ class TestView(TestCase):
         cache.clear()
         response_last = self.author_client.get(reverse('posts:index'))
         self.assertNotEqual(response_after.content, response_last.content)
+
+    def test_delete_post(self):
+        """Проверим корректную работу удаления поста."""
+        post = Post.objects.create(
+            text='Пост для удаления',
+            author=TestView.user_pshk,
+            group=TestView.group1
+        )
+
+        post_id = post.pk
+        self.author_client.post(
+            reverse('posts:delete_post', kwargs={'post_id': post_id})
+        )
+        self.assertEqual(Post.objects.filter(pk=post_id).exists(), False)
